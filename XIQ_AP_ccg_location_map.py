@@ -112,14 +112,14 @@ set_location = {}
 for device_id in device_list:
     #sys.stdout.write(RED)
     if device_id not in ccg_devices:
-        logger.error(f"device {device_id} is not associated with a Cloud Config Group!!")
+        logger.warning(f"device {device_id} is not associated with a Cloud Config Group!!")
     else:
         ccg_name = ccg_df.loc[device_id, 'ccg_name']
         if not isinstance(ccg_name, str):
-            logger.error(f"Device {device_id} is in multiple Cloud Config Groups!!")
+            logger.warning(f"Device {device_id} is in multiple Cloud Config Groups!!")
         else:
             if "RFD-" not in ccg_name:
-                logger.error(f"Device {device_id} is in CCG {ccg_name} which is not an WiNG RFD created CCG!!")
+                logger.warning(f"Device {device_id} is in CCG {ccg_name} which is not an WiNG RFD created CCG!!")
             else:
                 rfd_name = ccg_name.replace("RFD-","")
                 if rfd_name in location_df['name'].tolist():
@@ -132,7 +132,7 @@ for device_id in device_list:
                     else:
                         set_location[rfd_name]["devices"]["ids"].append(device_id)
                 else:
-                    logger.error(f"Can't move device {device_id}. There is not a building with the name {rfd_name}!!")
+                    logger.warning(f"Can't move device {device_id}. There is not a building with the name {rfd_name}!!")
 
     #sys.stdout.write(RESET)
 
