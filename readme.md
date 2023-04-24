@@ -36,7 +36,7 @@ When running the script a prompt will display asking for your XIQ login credenti
 ### messages
 Status messages will be printed on the screen as the script collects the data. Once all the data is collected any issue with the mapping of CCGs and locations will be printed on the screen and logged in the log file with ERROR level. If devices are found that can be moved they will print and be logged as INFO messages.
 Any issues with API calls will also print to the screen and be logged.
-If any API call fail the script will automatically attempt up to 4 additional times.
+If any API call fails, the script will automatically attempt up to 4 additional times.
 
 ### flags
 There is an optional flag that can be added when the script is ran.
@@ -44,7 +44,7 @@ There is an optional flag that can be added when the script is ran.
 --external
 ```
 This flag will allow you to create the locations and assign the devices to locations on an XIQ account you are an external user on. After logging in with your XIQ credentials the script will give you a numeric option of each of the XIQ instances you have access to. Choose the one you would like to use.
-```
+
 
 ## requirements
 There are additional modules that need to be installed in order for this script to function. They are listed in the requirements.txt file and can be installed with the command 'pip install -r requirements.txt' if using pip.
