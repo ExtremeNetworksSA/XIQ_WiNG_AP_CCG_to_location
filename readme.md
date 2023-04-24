@@ -23,8 +23,8 @@ The script will preform API call(s) to collect the CCG information. The API allo
 
 ### Devices
 
-The script will collect all devices associated with the XIQ instance. The API call that is used will return just the location information and the device ID. This script does not collect the names, models, or other information about the devices. Once all devices are collected, all devices that have no location assigned to them will be filtered out. Using the CCG data pulled, the device ids are mapped to the CCG they are in. Then using the name 'RFD-' is removed for the CCG name and then checked against the names of building in the location data. If a match is found the associated floors of the building are pulled from the data and used in the API call to move devices. 
->NOTE: a single API call is used per location adding multiple devices at one. Engineering has stated they support up to 1000 devices at once, but I have not tested this. If there is an issue, a paging system may need to be added to the script.
+The script will collect all devices associated with the XIQ instance that have a null location_id value. Using the CCG data pulled, the device ids are mapped to the CCG they are in. Then using the name 'RFD-' is removed for the CCG name and then checked against the names of building in the location data. If a match is found the associated floors of the building are pulled from the data and used in the API call to move devices. 
+>NOTE: a single API call is used per location adding multiple devices at once. Engineering has stated they support up to 1000 devices at once, but I have not tested this. If there is an issue, a paging system may need to be added to the script.
 >NOTE: XY coordinates are not adjusted for the devices. Each device will be placed at 0,0 (top left corner of the map)
 
 ## Running the script
