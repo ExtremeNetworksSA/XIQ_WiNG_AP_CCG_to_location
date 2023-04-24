@@ -4,6 +4,7 @@ import inspect
 from socketserver import BaseRequestHandler
 import sys
 import json
+import time
 from xmlrpc.client import APPLICATION_ERROR
 from numpy import isin
 import requests
@@ -18,6 +19,9 @@ from app.ccg_logger import logger
 logger = logging.getLogger('CCG_Updater.xiq_collector')
 
 PATH = current_dir
+
+loc_count = 0
+tic = 0
 
 class XIQ:
     def __init__(self, user_name=None, password=None, token=None):
@@ -198,13 +202,25 @@ class XIQ:
 
     #BUILDINGS
     def __buildLocationDf(self, location, pname = 'Global'):
+        global loc_count
+        loc_count += 1
+        toc = time.perf_counter()
+        print(f'{toc - tic:0.1f}', end='\r')
+        sys.stdout.flush()
         if 'parent_id' not in location:
             temp_df = pd.DataFrame([{'id': location['id'], 'name':location['name'], 'type': 'Global', 'parent':pname}])
             self.locationTree_df = pd.concat([self.locationTree_df, temp_df], ignore_index=True)
         else:
             temp_df = pd.DataFrame([{'id': location['id'], 'name':location['name'], 'type': location['type'], 'parent':pname}])
             self.locationTree_df = pd.concat([self.locationTree_df, temp_df], ignore_index=True)
+        if location['type'] == 'Location':
+            url = "{}/locations/tree?parentId={}&expandChildren=false".format(self.URL,location['id'])
+            location['children'] = self.__setup_get_api_call("gather child for {}".format(location['name']),url)
+        elif location['type'] == "BUILDING":
+            url = "{}/locations/tree?parentId={}&expandChildren=true".format(self.URL,location['id'])
+            location['children'] = self.__setup_get_api_call("gather child for {}".format(location['name']),url)
         r = json.dumps(location['children'])
+        #print(r)
         if location['children']:
             parent_name = location['name']
             for child in location['children']:
@@ -301,15 +317,23 @@ class XIQ:
 
     ## LOCATIONS
     def gatherLocations(self):
+        global loc_count
+        global tic
+        tic = time.perf_counter()
         info=f"gather location tree"
-        url = "{}/locations/tree".format(self.URL)
+        url = "{}/locations/tree?expandChildren=false".format(self.URL)
         response = self.__setup_get_api_call(info,url)
         for location in response:
+            global_id = location['id']
+            url = "{}/locations/tree?parentId={}&expandChildren=false".format(self.URL,global_id)
+            child_response = self.__setup_get_api_call(info,url)
+            location['children'] = child_response
             self.__buildLocationDf(location)
+        logger.info("Collected Location Tree in {} API calls.".format(loc_count))
         return (self.locationTree_df)
 
     ## Devices
-    def collectDevices(self, pageSize, location_id=None):
+    def collectDevices(self, pageSize):
         info = "collecting devices" 
         page = 1
         pageCount = 1
@@ -317,9 +341,7 @@ class XIQ:
 
         devices = []
         while page <= pageCount:
-            url = self.URL + "/devices?page=" + str(page) + "&limit=" + str(pageSize) + "&views=LOCATION"
-            if location_id:
-                url = url  + "&locationId=" +str(location_id)
+            url = self.URL + "/devices?page=" + str(page) + "&limit=" + str(pageSize) + "&nullField=LOCATION_ID"
             rawList = self.__setup_get_api_call(info,url)
             devices = devices + rawList['data']
 

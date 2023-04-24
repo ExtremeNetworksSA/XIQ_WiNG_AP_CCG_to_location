@@ -99,40 +99,38 @@ for ccg in ccg_data:
             ccg_df = pd.concat([ccg_df,pd.DataFrame([{'device_id': device_id, 'ccg_id': ccg['id'], 'ccg_name': ccg['name']}])])
 #ccg_df = pd.DataFrame(ccg_data)
 ccg_df.set_index('device_id',inplace=True)
-ccg_devices = ccg_df.index.tolist()
+
 
 print("Collecting Devices...")
 device_data = x.collectDevices(pageSize)
 device_df = pd.DataFrame(device_data)
 device_df.set_index('id',inplace=True)
-device_df = device_df[pd.isnull(device_df['location_id'])]
 print(f"Found {len(device_df.index)} Devices without locations")
-device_list = device_df.index.tolist()
 set_location = {}
-for device_id in device_list:
+for device_id in device_df.index.tolist():
     #sys.stdout.write(RED)
-    if device_id not in ccg_devices:
-        logger.warning(f"device {device_id} is not associated with a Cloud Config Group!!")
+    if device_id not in ccg_df.index.tolist():
+        logger.warning(f"device {device_df.loc[device_id,'hostname']} is not associated with a Cloud Config Group!!")
     else:
         ccg_name = ccg_df.loc[device_id, 'ccg_name']
         if not isinstance(ccg_name, str):
-            logger.warning(f"Device {device_id} is in multiple Cloud Config Groups!!")
+            logger.warning(f"Device {device_df.loc[device_id,'hostname']} is in multiple Cloud Config Groups!!")
         else:
             if "RFD-" not in ccg_name:
-                logger.warning(f"Device {device_id} is in CCG {ccg_name} which is not an WiNG RFD created CCG!!")
+                logger.warning(f"Device {device_df.loc[device_id,'hostname']} is in CCG '{ccg_name}' which is not an WiNG RFD created CCG!!")
             else:
                 rfd_name = ccg_name.replace("RFD-","")
                 if rfd_name in location_df['name'].tolist():
                     filt = (location_df['parent'] == rfd_name)
                     floor = location_df.loc[filt].index.tolist()[-1]
                     #sys.stdout.write(GREEN)
-                    logger.info(f"Device {device_id} will be added to {rfd_name} on floor '{location_df.loc[floor,'name']}'")
+                    logger.info(f"Device {device_df.loc[device_id,'hostname']} will be added to {rfd_name} on floor '{location_df.loc[floor,'name']}'")
                     if rfd_name not in set_location:
                         set_location[rfd_name] = {"devices":{"ids":[device_id]},"device_location":{"location_id":floor,"x":0,"y":0,"latitude":0,"longitude":0}}
                     else:
                         set_location[rfd_name]["devices"]["ids"].append(device_id)
                 else:
-                    logger.warning(f"Can't move device {device_id}. There is not a building with the name {rfd_name}!!")
+                    logger.warning(f"Can't move device {device_df.loc[device_id,'hostname']}. There is not a building with the name '{rfd_name}'!!")
 
     #sys.stdout.write(RESET)
 
