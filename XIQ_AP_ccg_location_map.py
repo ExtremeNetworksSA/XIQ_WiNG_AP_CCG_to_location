@@ -16,6 +16,8 @@ current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfra
 logger = logging.getLogger('CCG_Updater.Main')
 
 
+# permissions needed - "locations:r", "device", "ccg:r"
+# if exteranl account this permission is needed - "account"
 XIQ_API_token = ''
 
 pageSize = 100
@@ -81,6 +83,15 @@ if args.external:
                     newViqName = (accounts_df.loc[int(selection),'name'])
                     x.switchAccount(newViqID, newViqName)
 
+print("Collecting Devices...")
+device_data = x.collectDevices(pageSize)
+device_df = pd.DataFrame(device_data)
+device_df.set_index('id',inplace=True)
+if len(device_df.index) == 0:
+    print("\nNo devices were found without locations set")
+    print("script is exiting...")
+    raise SystemExit
+print(f"\nFound {len(device_df.index)} Devices without locations")
 
 print("Collecting Location information...")
 # Collect Locations
@@ -101,11 +112,6 @@ for ccg in ccg_data:
 ccg_df.set_index('device_id',inplace=True)
 
 
-print("Collecting Devices...")
-device_data = x.collectDevices(pageSize)
-device_df = pd.DataFrame(device_data)
-device_df.set_index('id',inplace=True)
-print(f"Found {len(device_df.index)} Devices without locations")
 set_location = {}
 for device_id in device_df.index.tolist():
     #sys.stdout.write(RED)

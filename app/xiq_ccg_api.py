@@ -132,7 +132,7 @@ class XIQ:
             raise ValueError("Unable to parse the data from json, script cannot proceed")
         return data
 
-    def __post_api_call(self, url, payload, res):
+    def __post_api_call(self, url, payload, res=True):
         try:
             response = requests.post(url, headers= self.headers, data=payload)
         except HTTPError as http_err:
