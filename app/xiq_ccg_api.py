@@ -200,31 +200,7 @@ class XIQ:
             logger.warning(log_msg)
             raise ValueError(log_msg)
 
-    #BUILDINGS
-    def __buildLocationDf(self, location, pname = 'Global'):
-        global loc_count
-        loc_count += 1
-        toc = time.perf_counter()
-        print(f'{toc - tic:0.1f}', end='\r')
-        sys.stdout.flush()
-        if 'parent_id' not in location:
-            temp_df = pd.DataFrame([{'id': location['id'], 'name':location['name'], 'type': 'Global', 'parent':pname}])
-            self.locationTree_df = pd.concat([self.locationTree_df, temp_df], ignore_index=True)
-        else:
-            temp_df = pd.DataFrame([{'id': location['id'], 'name':location['name'], 'type': location['type'], 'parent':pname}])
-            self.locationTree_df = pd.concat([self.locationTree_df, temp_df], ignore_index=True)
-        if location['type'] == 'Location':
-            url = "{}/locations/tree?parentId={}&expandChildren=false".format(self.URL,location['id'])
-            location['children'] = self.__setup_get_api_call("gather child for {}".format(location['name']),url)
-        elif location['type'] == "BUILDING":
-            url = "{}/locations/tree?parentId={}&expandChildren=true".format(self.URL,location['id'])
-            location['children'] = self.__setup_get_api_call("gather child for {}".format(location['name']),url)
-        r = json.dumps(location['children'])
-        #print(r)
-        if location['children']:
-            parent_name = location['name']
-            for child in location['children']:
-                self.__buildLocationDf(child, pname=parent_name)
+
 
     ## EXTERNAL FUNCTION
 
@@ -316,21 +292,33 @@ class XIQ:
             raise ValueError(log_msg) 
 
     ## LOCATIONS
-    def gatherLocations(self):
-        global loc_count
-        global tic
-        tic = time.perf_counter()
-        info=f"gather location tree"
-        url = "{}/locations/tree?expandChildren=false".format(self.URL)
-        response = self.__setup_get_api_call(info,url)
-        for location in response:
-            global_id = location['id']
-            url = "{}/locations/tree?parentId={}&expandChildren=false".format(self.URL,global_id)
-            child_response = self.__setup_get_api_call(info,url)
-            location['children'] = child_response
-            self.__buildLocationDf(location)
-        logger.info("Collected Location Tree in {} API calls.".format(loc_count))
-        return (self.locationTree_df)
+    def getFloors(self, rfd_name):
+        floors = {}
+        errors =[]
+        info = "gathering floors"
+        url = self.URL + '/locations/building?name=' + rfd_name
+        rawList = self.__setup_get_api_call(info,url)
+        if rawList['total_count'] == 0:
+            error_msg = (f"No building was found with the name {rfd_name}")
+            errors.append(error_msg)
+        elif rawList['total_count'] > 1:
+            error_msg = (f"Multiple buildings found with the name {rfd_name}")
+            errors.append(error_msg)
+        else:
+            if len(rawList['data']) != 1:
+                error_msg = (f"Multiple buildings found with the name {rfd_name}")
+                errors.append(error_msg)
+            else:
+                floors = self._gatherFloorList(info, rawList['data'][0]['id'])
+                return floors
+        if errors:
+            floors['errors'] = errors
+        return floors
+
+    def _gatherFloorList(self, info, bld_id):
+        url = self.URL + '/locations/tree?parentId=' + str(bld_id) + '&expandChildren=false' 
+        rawList = self.__setup_get_api_call(info,url)
+        return rawList
 
     ## Devices
     def collectDevices(self, pageSize):

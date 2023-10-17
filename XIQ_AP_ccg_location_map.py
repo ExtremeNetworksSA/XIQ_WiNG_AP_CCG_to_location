@@ -94,10 +94,6 @@ if len(device_df.index) == 0:
 print(f"\nFound {len(device_df.index)} Devices without locations")
 
 print("Collecting Location information...")
-# Collect Locations
-location_df = x.gatherLocations()
-location_df.set_index('id',inplace=True)
-#print(location_df)
 
 print("Collecting CCGs...")
 ## Collect CCGs
@@ -126,17 +122,20 @@ for device_id in device_df.index.tolist():
                 logger.warning(f"Device {device_df.loc[device_id,'hostname']} is in CCG '{ccg_name}' which is not an WiNG RFD created CCG!!")
             else:
                 rfd_name = ccg_name.replace("RFD-","")
-                if rfd_name in location_df['name'].tolist():
-                    filt = (location_df['parent'] == rfd_name)
-                    floor = location_df.loc[filt].index.tolist()[-1]
+                rfd_floor = x.getFloors(rfd_name)
+                if 'errors' in rfd_floor:
+                    errors = ", ".join(rfd_floor['errors'])
+                    logger.warning(f"Can't move device {device_df.loc[device_id,'hostname']}. {errors}")
+                elif len(rfd_floor) == 0:
+                    logger.warning(f"Can't move device {device_df.loc[device_id,'hostname']}. There is not a building with the name '{rfd_name}'!!")
                     #sys.stdout.write(GREEN)
-                    logger.info(f"Device {device_df.loc[device_id,'hostname']} will be added to {rfd_name} on floor '{location_df.loc[floor,'name']}'")
+                else:
+                    last_floor = rfd_floor[-1]
+                    logger.info(f"Device {device_df.loc[device_id,'hostname']} will be added to {rfd_name} on floor '{last_floor['name']}'")
                     if rfd_name not in set_location:
-                        set_location[rfd_name] = {"devices":{"ids":[device_id]},"device_location":{"location_id":floor,"x":0,"y":0,"latitude":0,"longitude":0}}
+                        set_location[rfd_name] = {"devices":{"ids":[device_id]},"device_location":{"location_id":last_floor['id'],"x":0,"y":0,"latitude":0,"longitude":0}}
                     else:
                         set_location[rfd_name]["devices"]["ids"].append(device_id)
-                else:
-                    logger.warning(f"Can't move device {device_df.loc[device_id,'hostname']}. There is not a building with the name '{rfd_name}'!!")
 
     #sys.stdout.write(RESET)
 
