@@ -2,9 +2,8 @@
 ### XIQ_AP_ccg_location_map.py
 
 ## Purpose
-This script can be used to assign floors to WiNG APs based on the Cloud Config Group (CCG) the AP is in. When a WiNG controller is onboarded into XIQ, each online device will be added to XIQ. Each device will be assigned a Cloud Config Group with the name of the rf-domain the AP is part of. The locations, buildings, and floors will need to be previously created with the [XIQ_wing_migrate.py](https://github.com/timjsmith24/XIQ_Wing_location_migration) script. This script will create a building for each rf-domain, and will create floors based on the rf-domain configuration. If there are no floors configured in the rf-domain a 'floor1' will be created in XCQ under the building (rf-domain).
->NOTE: Any device that is online in XIQ and is in the tech-dump when the XIQ_wing_migrate.py script is ran will be moved to the correct floors by that script. This script is to be used for any APs that are not online in XIQ when the script is ran.
->NOTE: Also note that this script will not know if the AP is placed on a specific floor with in the WiNG config. These APs will be moved into the bottom floor of the building (rf-domain) that matches the name of the CCG they are part of.
+This script can be used to assign floors to WiNG APs based on the Cloud Config Group (CCG) the AP is in. When a WiNG controller is onboarded into XIQ, each online device will be added to XIQ. Each device will be assigned a Cloud Config Group with the name of the rf-domain the AP is part of. The locations, buildings, and floors will need to exist in XIQ.
+>NOTE: These APs will be moved into the bottom floor of the building (rf-domain) that matches the name of the CCG they are part of.
 
 ## Information
 ### Needed files
@@ -14,7 +13,7 @@ In the same folder as the XIQ_AP_ccg_location_map.py script there should be an /
 
 ### Locations
 
-The script will preform an API call to get the location tree information. This is then used to assign APs to the floor based on the Building (rf-domain name). If there are more then 1 floor associated to the building, the devices will be placed on the bottom floor.
+The script will preform an API call to get the building information based on the ccg name, then another API will be made to get the floors of that building. This is then used to assign APs to the floor based on the Building (rf-domain name). If there are more then 1 floor associated to the building, the devices will be placed on the bottom floor.
 
 ### CCGs
 
@@ -31,7 +30,7 @@ The script will collect all devices associated with the XIQ instance that have a
 
 When running the script a prompt will display asking for your XIQ login credentials.
 > NOTE: you can by pass this section by entering a valid API Token to line 19 of the XIQ_AP_ccg_location_map.py script
->  - if the added token isn't valid you will see the script fail to gather location tree info with a HTTP Status Code: 401
+>  - if the added token isn't valid you will see the script fail while trying to collect devices with a HTTP Status Code: 401
 
 ### messages
 Status messages will be printed on the screen as the script collects the data. Once all the data is collected any issue with the mapping of CCGs and locations will be printed on the screen and logged in the log file with ERROR level. If devices are found that can be moved they will print and be logged as INFO messages.
