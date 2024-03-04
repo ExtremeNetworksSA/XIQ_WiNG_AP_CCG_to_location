@@ -93,8 +93,6 @@ if len(device_df.index) == 0:
     raise SystemExit
 print(f"\nFound {len(device_df.index)} Devices without locations")
 
-print("Collecting Location information...")
-
 print("Collecting CCGs...")
 ## Collect CCGs
 ccg_data = x.collectCCG(pageSize)
